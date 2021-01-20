@@ -15,25 +15,26 @@ defmodule PhxDiff.Diffs.AppRepo.AppGenerator do
   def generate(%Config{} = config, %AppSpecification{} = app_specification) do
     %Config{app_generator_workspace_path: workspace_path} = config
 
-    generate_sample_app(workspace_path, app_specification)
+    generate_sample_app(config, workspace_path, app_specification)
   end
 
-  defp generate_sample_app(workspace_path, app_specification) do
+  defp generate_sample_app(config, workspace_path, app_specification) do
     app_generation_job =
       [workspace_path, "generated_apps", random_string(16)]
       |> Path.join()
       |> AppGenerationJob.new()
 
-    with :ok <- run_phoenix_generator(app_generation_job, app_specification),
+    with :ok <- run_phoenix_generator(config, app_generation_job, app_specification),
          :ok <- clean_up_generated_app!(app_generation_job) do
       {:ok, app_generation_job}
     end
   end
 
-  defp run_phoenix_generator(app_generation_job, app_specification) do
+  defp run_phoenix_generator(config, app_generation_job, app_specification) do
     set_up_earthly!(app_generation_job.tmp_path, app_specification)
 
     earthly_run(
+      config,
       [
         "--build-arg",
         "OUTPUT_PATH=#{Path.expand(app_generation_job.project_path)}",
@@ -74,10 +75,10 @@ defmodule PhxDiff.Diffs.AppRepo.AppGenerator do
     :ok
   end
 
-  def earthly_run(args, path, opts \\ [])
+  def earthly_run(%Config{} = config, args, path, opts \\ [])
       when is_list(args) and is_binary(path) and is_list(opts) do
     System.cmd(
-      "earthly",
+      config.earthly_path,
       args,
       [stderr_to_stdout: true, cd: path] ++ opts
     )

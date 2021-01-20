@@ -97,9 +97,6 @@ defmodule PhxDiff.Diffs do
   end
 
   defp default_config do
-    %Config{
-      app_repo_path: "data/sample-app",
-      app_generator_workspace_path: "tmp"
-    }
+    Config.new()
   end
 end

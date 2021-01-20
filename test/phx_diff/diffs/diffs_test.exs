@@ -176,10 +176,10 @@ defmodule PhxDiff.DiffsTest do
   end
 
   defp build_config(tmp_path) do
-    %Config{
+    Config.new(
       app_repo_path: Path.join(tmp_path, "app_repo"),
       app_generator_workspace_path: Path.join(tmp_path, "generator_workspace")
-    }
+    )
   end
 
   defp assert_temp_dirs_cleaned_up(config) do
