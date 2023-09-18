@@ -16,19 +16,24 @@ defmodule PhxDiffWeb.CompareLiveTest do
 
     assert has_element?(
              view,
-             ~S|#[name="diff_selection[source]"] [selected=selected]|,
+             ~S|#[name="diff_selection[source][version]"] [selected=selected]|,
              PhxDiff.previous_release_version() |> to_string()
            )
 
     assert has_element?(
              view,
-             ~S|#[name="diff_selection[target]"] [selected=selected]|,
+             ~S|#[name="diff_selection[target][version]"] [selected=selected]|,
              PhxDiff.latest_version() |> to_string()
            )
 
     view
     |> element("#diff-selection-form")
-    |> render_change(%{"diff_selection" => %{"source" => "1.5.0", "target" => "1.5.1"}})
+    |> render_change(%{
+      "diff_selection" => %{
+        "source" => %{"version" => "1.5.0"},
+        "target" => %{"version" => "1.5.1"}
+      }
+    })
 
     assert_patch(
       view,
@@ -68,6 +73,24 @@ defmodule PhxDiffWeb.CompareLiveTest do
                       name: "PhxDiffWeb.CompareLive.mount",
                       attributes: %{"liveview.callback": "mount"}
                     }}
+  end
+
+  test "selecting invalid version numbers redirect to latest versions", %{conn: conn} do
+    {:ok, view, _html} = conn |> live(~p"/") |> follow_redirect(conn)
+
+    view
+    |> element("#diff-selection-form")
+    |> render_change(%{
+      "diff_selection" => %{
+        "source" => %{"version" => "a", "variant" => "no_ecto"},
+        "target" => %{"version" => "b", "variant" => "no_ecto"}
+      }
+    })
+
+    assert_patch(
+      view,
+      ~p"/?#{[source: PhxDiff.previous_release_version(), source_variant: :no_ecto, target: PhxDiff.latest_version(), target_variant: :no_ecto]}"
+    )
   end
 
   test "toggling line by line or side by side", %{conn: conn} do
